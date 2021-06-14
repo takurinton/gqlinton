@@ -57,7 +57,7 @@ export interface OperationResult<Data = any, Variables = any> {
   data?: Data;
   error?: CombinedError;
   extensions?: Record<string, any>;
-  stale?: boolean;
+  state?: boolean;
 }
 
 export interface ExchangeInput {
