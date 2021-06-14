@@ -18,6 +18,7 @@ import {
     map,
     Subscription,
 } from 'wonka';
+
 import { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import { DocumentNode } from 'graphql';
 
@@ -44,3 +45,5 @@ import {
     noop,
     makeOperation, 
 } from './utils';
+
+export interface Client {};
