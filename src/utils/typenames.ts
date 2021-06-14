@@ -29,7 +29,7 @@ const collectTypes = (
     return types;
 };
 
-export const collectTypesFromResponse = (response: object) => Object.keys(collectTypes(response as EntityLike, {}));
+export const collectTypesFromResponse = (res: object) => Object.keys(collectTypes(res as EntityLike, {}));
 
 const fmtNode = (node: FieldNode | InlineFragmentNode) => {
     // ここよくわかってない

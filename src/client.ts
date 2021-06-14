@@ -46,4 +46,6 @@ import {
     makeOperation, 
 } from './utils';
 
-export interface Client {};
+export interface Client {
+    reexecuteOperation: (operation: Operation) => void;
+};
