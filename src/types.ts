@@ -61,7 +61,7 @@ export interface OperationResult<Data = any, Variables = any> {
 }
 
 export interface ExchangeInput {
-  client: Client; // ほんとは Client がくる。
+  client: Client;
   forward: ExchangeIO;
   dispatchDebug: <T extends keyof DebugEventTypes | string>(
     t: DebugEventArg<T>
