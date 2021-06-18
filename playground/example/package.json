@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "re": "npm i && npm run build",
     "build": "node esbuild.js"
   },
   "author": "takurinton",
   "license": "ISC",
   "devDependencies": {
     "esbuild": "^0.12.5",
-    "graphql": "^14.6.0",
-    "gqlinton": "../.."
+    "gqlinton": "../..",
+    "graphql": "^14.7.0"
   }
 }

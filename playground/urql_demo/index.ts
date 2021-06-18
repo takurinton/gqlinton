@@ -15,7 +15,6 @@ const client = createClient({
     url: 'http://localhost:8080/graphql',
 });
 
-client
-.query(QUERY, { id: 60 })
+client.query(QUERY, { id: 50 })
 .toPromise()
-.then(res => console.log(res));
+.then(res => console.log(res))

@@ -16,6 +16,6 @@ const client = createClient({
 });
 
 client
-.query(QUERY, { id: 60 })
+.query(QUERY, { id: 50 })
 .toPromise()
 .then(res => console.log(res));
