@@ -5,6 +5,7 @@ build({
   outbase: './src',
   outdir: './dist',
   bundle: true,
+  format: 'esm',
   platform: 'node',
   external: [], 
   watch: false,
