@@ -67,7 +67,7 @@ export const cacheExchange: Exchange = ({ forward, client, dispatchDebug }) => {
                 };
 
                 if (operation.context.requestPolicy === 'cache-and-network') {
-                    result.state = true;
+                    result.old = true;
                     reexecuteOperation(client, operation);
                 };
 
