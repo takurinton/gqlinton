@@ -1,3 +1,9 @@
+// ここがキーとなる（エントリポイント）になる
+// 基本的には 
+// operation を生成 → operation を実行 → 古くなったら破棄
+// の流れ
+// operation はキューで管理されている
+
 import {
     filter,
     make,
@@ -281,10 +287,55 @@ export const Client: new (opts: Options) => Client = function Client(
             }
         }, 
         createOperationContext(opts) {
+            if (!opts) opts = {};
+            return {
+                url: client.url,
+                fetchOptions: client.fetchOptions,
+                fetch: client.fetch,
+                preferGetMethod: client.preferGetMethod,
+                ...opts,
+                suspense: opts.suspense || (opts.suspense !== false && client.suspense),
+                requestPolicy: opts.requestPolicy || client.requestPolicy,
+            };
         }, 
         createRequestOperation(kind, request, opts) {
+            return makeOperation(kind, request, client.createOperationContext(opts));
         },
         executeRequestOperation(operation) {
+            if (operation.kind === 'mutation') {
+                return makeResultSource(operation);
+            }
+
+            const source = active.get(operation.key) || makeResultSource(operation);
+
+            // キャッシュに関わらず、最終的には常にリクエストを投げる系のやつ
+            const isNetworkOperation = operation.context.requestPolicy === 'cache-and-network' || operation.context.requestPolicy === 'network-only';
+
+            // observer には next と complete がある
+            return make(observer => {
+                return pipe(
+                    source, 
+                    onStart(() => {
+                        const prevReplay = replays.get(operation.key);
+                        if (operation.kind === 'subscription') {
+                            // キューを空にして return する
+                            return dispatchOperation(operation);
+                        } else if (isNetworkOperation) {
+                            // キューを空にする
+                            dispatchOperation(operation);
+                        }
+
+                        // replay に存在していたら古い operation
+                        if (prevReplay != null && prevReplay === replays.get(operation.key)) {
+                            observer.next(isNetworkOperation ? { ...prevReplay, old: true } : prevReplay);
+                        } else if (!isNetworkOperation) {
+                            dispatchOperation(operation);
+                        }
+                    }), 
+                    onEnd(observer.complete),
+                    subscribe(observer.next)
+                ).unsubscribe;
+            });
         }, 
         query(query, variables, context) {
         }, 
