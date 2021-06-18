@@ -135,3 +135,107 @@ export interface Client {
         opts?: Partial<OperationContext> | undefined
     ): Source<OperationResult<Data, Variables>>;
 };
+
+export const Client: new (opts: Options) => Client = function Client(
+    this: Client | {},
+    opts: Options
+) {
+    if (process.env.NODE_ENV !== 'production' && !opts.url) {
+        throw new Error('You are creating an client without a url.');
+    }
+
+    const replays = new Map<number, OperationResult>();
+    const active: Map<number, Source<OperationResult>> = new Map();
+    const queue: Operation[] = []; // operation が入ってる、下で dispatcher を定義していて、そこで操作を行う、操作の操作、、なんつって
+
+    // operation を入れる, subject に新しい operation を dispatch するたびに呼ばれる
+    // makeSubject は wonka 
+    const { 
+        source: operations$, 
+        next: nextOperation 
+    } = makeSubject<Operation>();
+
+    // キューの dispatcher を定義する、キューを空にすることができる
+    let isOperationBatchActive = false;
+    const dispatchOperation = (operation?: Operation | void) => {
+        isOperationBatchActive = true;
+        if (operation) nextOperation(operation);
+        // queue なので shift https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/shift
+        while ((operation = queue.shift())) nextOperation(operation);
+        isOperationBatchActive = false;
+    }
+
+    // result の stream の生成
+    const makeResultSource = (operation: Operation) => {
+        let result$ = pipe(
+            results$, 
+            filter(
+                (res: OperationResult) => res.operation.kind === operation.kind && res.operation.key === operation.key
+            )
+        );
+
+        // option が on になってる場合は typename を返す
+        if (client.maskTypename) {
+                result$ = pipe(
+                result$, 
+                map(res => ({ ...res, data: typenameWrap(res.data) }))
+            )
+        }
+
+        // mutation は新しいキャッシュを生成するため、常に一意になる
+        if (operation.kind === 'mutation') {
+            return pipe(
+              result$,
+              onStart(() => dispatchOperation(operation)),
+              take(1)
+            );
+        }
+    };
+
+    // Clietn のインスタンスを作成
+    // 上の interface で定義した Client の関数たちを使っていく
+    const instance: Client = this instanceof Client ? this : Object.create(Client.prototype);
+    // Object.assign
+    // 第一引数のオブジェクトに第二引数のオブジェクトを移す（第一引数のオブジェクトは保持されるけど競合を起こしてたら第二引数の値が優先される
+    // 戻り値と第一引数の値は等しくなる (ここで言うと client === instance は true)
+    // 第二引数は変更されない
+    // https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+    const client: Client = Object.assign(instance, {
+        url: opts.url,
+        fetchOptions: opts.fetchOptions,
+        fetch: opts.fetch,
+        suspense: !!opts.suspense,
+        requestPolicy: opts.requestPolicy || 'cache-first',
+        preferGetMethod: !!opts.preferGetMethod,
+        maskTypename: !!opts.maskTypename,
+        operations$, 
+
+    })
+
+    // デバッグ用の dispatch 
+    let dispatchDebug: ExchangeInput['dispatchDebug'] = noop;
+    if (process.env.NODE_ENV !== 'production') {
+        const { next, source } = makeSubject<DebugEvent>();
+        client.subscribeToDebugTarget = (onEvent: (e: DebugEvent) => void) =>
+        pipe(source, subscribe(onEvent));
+        dispatchDebug = next as ExchangeInput['dispatchDebug'];
+    }
+
+    const exchanges = opts.exchanges !== undefined ? opts.exchanges : defaultExchanges;
+
+    // 全ての Exchange は単一
+    const composedExchange = composeExchanges(exchanges);
+
+    // stream の io(全ての exchange は ExchangeIO を介して実行される)
+    // results$ の stream を受け取って client にアクセスするか、dispatch する
+    const results$ = share(
+        composedExchange({
+          client,
+          dispatchDebug,
+          forward: fallbackExchange({ dispatchDebug }),
+        })(operations$)
+      );
+    
+} as any;
+
+export const createClient = (Client as any) as (opts: Options) => Client;
