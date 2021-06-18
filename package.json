@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node esbuild.js"
   },
   "author": "takurinton",
   "license": "ISC",
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.1.0",
     "@types/node": "^15.12.2",
+    "esbuild": "^0.12.9",
     "graphql": "^15.5.0",
     "wonka": "^4.0.15"
   }
