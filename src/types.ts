@@ -1,7 +1,7 @@
 import { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import { DocumentNode } from 'graphql';
 import { Source } from 'wonka';
-// import { Client } from './client'; あとで追加
+import { Client } from './client';
 import { CombinedError } from './utils/error';
 
 export { ExecutionResult } from 'graphql';
@@ -57,11 +57,11 @@ export interface OperationResult<Data = any, Variables = any> {
   data?: Data;
   error?: CombinedError;
   extensions?: Record<string, any>;
-  stale?: boolean;
+  old?: boolean;
 }
 
 export interface ExchangeInput {
-  client: any; // ほんとは Client がくる。
+  client: Client;
   forward: ExchangeIO;
   dispatchDebug: <T extends keyof DebugEventTypes | string>(
     t: DebugEventArg<T>

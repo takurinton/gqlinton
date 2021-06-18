@@ -7,7 +7,7 @@ export function stream<T extends OperationResult>(
     (source$ as PromisifiedSource<T>).toPromise = () => {
       return pipe(
         source$,
-        filter(result => !result.stale),
+        filter(result => !result.old),
         take(1),
         toPromise
       );
