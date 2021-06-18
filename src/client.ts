@@ -402,7 +402,7 @@ export const Client: new (opts: Options) => Client = function Client(
         dispatchDebug = next as ExchangeInput['dispatchDebug'];
     }
 
-    const exchanges = opts.exchanges !== undefined ? opts.exchanges : defaultExchanges;
+    const exchanges = opts.exchanges !== undefined ? opts.exchanges : defaultExchanges; // defaultExchanges は三種類のキャッシュ
 
     // 全ての Exchange は単一
     const composedExchange = composeExchanges(exchanges);
