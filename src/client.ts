@@ -254,6 +254,7 @@ export const Client: new (opts: Options) => Client = function Client(
 
     // Clietn のインスタンスを作成
     // 上の interface で定義した Client の関数たちを使っていく
+    // ここの実装が一番楽しいかもしれない
     const instance: Client = this instanceof Client ? this : Object.create(Client.prototype);
     // Object.assign
     // 第一引数のオブジェクトに第二引数のオブジェクトを移す（第一引数のオブジェクトは保持されるけど競合を起こしてたら第二引数の値が優先される
@@ -270,7 +271,37 @@ export const Client: new (opts: Options) => Client = function Client(
         maskTypename: !!opts.maskTypename,
         operations$, 
 
-    })
+        // interface Client で実装した関数をひたすら実装していく
+        reexecuteOperation(operation: Operation) {
+            // mutation の時
+            // または key があるとき（キャッシュがあるとき）
+            if (operation.kind === 'mutation' || active.has(operation.key)) {
+                queue.push(operation);
+                if (!isOperationBatchActive) Promise.resolve().then(dispatchOperation);
+            }
+        }, 
+        createOperationContext(opts) {
+        }, 
+        createRequestOperation(kind, request, opts) {
+        },
+        executeRequestOperation(operation) {
+        }, 
+        query(query, variables, context) {
+        }, 
+        readQuery(query, variables, context) {
+        },
+        executeQuery(query, opts) {
+        }, 
+        mutation(query, variables, context) {
+        },
+        executeMutation(query, opts) {
+        },
+        subscription(query, variables, context) {
+        },
+        executeSubscription(query, opts) {
+        },
+
+    } as Client);
 
     // デバッグ用の dispatch 
     let dispatchDebug: ExchangeInput['dispatchDebug'] = noop;
