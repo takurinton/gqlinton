@@ -144,6 +144,8 @@ export const Client: new (opts: Options) => Client = function Client(
         throw new Error('You are creating an client without a url.');
     }
 
+    // replays には key と result が入る
+    // active には key と source が入る(source は wonka)
     const replays = new Map<number, OperationResult>();
     const active: Map<number, Source<OperationResult>> = new Map();
     const queue: Operation[] = []; // operation が入ってる、下で dispatcher を定義していて、そこで操作を行う、操作の操作、、なんつって
@@ -190,6 +192,64 @@ export const Client: new (opts: Options) => Client = function Client(
               take(1)
             );
         }
+
+        const source = pipe(
+            result$, 
+            // https://wonka.kitten.sh/api/operators#takeuntil
+            // takeUntil: Take emissions from an outer source until an inner source (notifier) emits.
+            // アクティブな teardown が送信されたら終了する
+            takeUntil(
+                pipe(
+                  operations$,
+                  filter(op => op.kind === 'teardown' && op.key === operation.key)
+                )
+            ),
+            // https://wonka.kitten.sh/api/operators#switchmap
+            // 外部ソースの値を内部ソースにマップする
+            switchMap(result => {
+                if (result.old) {
+                    return fromValue(result);
+                }
+                return merge([
+                    fromValue(result), 
+                    pipe(
+                        operations$,
+                        // 条件が増えた
+                        // 追加された条件に関しては以下参照
+                        // https://dev.takurinton.com/tech/graphql/urql.html#urql-%E3%81%AE%E3%82%AD%E3%83%A3%E3%83%83%E3%82%B7%E3%83%A5
+                        filter(op => {
+                          return (
+                            op.kind === operation.kind &&
+                            op.key === operation.key &&
+                            (op.context.requestPolicy === 'network-only' || op.context.requestPolicy === 'cache-and-network')
+                          );
+                        }),
+                        take(1),
+                        map(() => ({ ...result, old: true }))
+                    ),
+                ]);
+            }), 
+            onPush(result => {
+                replays.set(operation.key, result);
+            }),
+            onStart(() => {
+                active.set(operation.key, source);
+            }),
+            onEnd(() => {
+                // アクティブな operation を削除する
+                replays.delete(operation.key);
+                active.delete(operation.key);
+                // キューを削除する
+                for (let i = queue.length - 1; i >= 0; i--)
+                  if (queue[i].key === operation.key) queue.splice(i, 1);
+                // 停止した teardown を dispatch する
+                dispatchOperation(
+                  makeOperation('teardown', operation, operation.context)
+                );
+            }),
+            share,
+        );
+        return source;
     };
 
     // Clietn のインスタンスを作成
