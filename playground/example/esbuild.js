@@ -1,11 +1,11 @@
 const { build } = require('esbuild');
 
 build({
-  entryPoints: ['./src/index.ts'], 
-  outbase: './src',
+  entryPoints: ['./index.ts'], 
+  outbase: './',
   outdir: './dist',
   bundle: true,
-  format: 'esm',
+  format: 'cjs',
   platform: 'browser',
   external: [], 
   watch: false,

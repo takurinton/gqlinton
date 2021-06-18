@@ -8,11 +8,9 @@
   },
   "author": "takurinton",
   "license": "ISC",
-  "dependencies": {
-    "@graphql-typed-document-node/core": "^3.1.0",
-    "@types/node": "^15.12.2",
-    "esbuild": "^0.12.9",
+  "devDependencies": {
+    "esbuild": "^0.12.5",
     "graphql": "^14.6.0",
-    "wonka": "^4.0.15"
+    "gqlinton": "../.."
   }
 }
