@@ -8,7 +8,8 @@ export const makeOkResult = (
     response?: any
 ): OperationResult => ({
     operation, 
-    data: Array.isArray(result.errors) ? new CombinedError({
+    data: result.data, 
+    error: Array.isArray(result.errors) ? new CombinedError({
         graphQLErrors: result.errors, 
         response
     }) : undefined, 
