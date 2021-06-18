@@ -4,6 +4,8 @@
 // の流れ
 // operation はキューで管理されている
 
+// それぞれのメソッド（query, mutation, subscription）は query と引数を用いて request を生成し、そこに context を渡して返す
+
 import {
     filter,
     make,
@@ -298,9 +300,13 @@ export const Client: new (opts: Options) => Client = function Client(
                 requestPolicy: opts.requestPolicy || client.requestPolicy,
             };
         }, 
+        // operation を作成する
+        // 作成した operation を executeRequestOperation に渡して operation を実行する
         createRequestOperation(kind, request, opts) {
             return makeOperation(kind, request, client.createOperationContext(opts));
         },
+        // createRequestOperation で生成した operation を受け取って operation を生成する
+        // operation の実行
         executeRequestOperation(operation) {
             if (operation.kind === 'mutation') {
                 return makeResultSource(operation);
@@ -338,18 +344,51 @@ export const Client: new (opts: Options) => Client = function Client(
             });
         }, 
         query(query, variables, context) {
+            if (!context || typeof context.suspense !== 'boolean') {
+                context = { ...context, suspense: false };
+            }
+            // PromisifiedSource を返す。Promise。
+            return stream(client.executeQuery(createRequest(query, variables), context));
         }, 
         readQuery(query, variables, context) {
+            let result: OperationResult | null = null;
+            pipe(
+                client.query(query, variables, context),
+                subscribe(res => {
+                result = res;
+                })
+            ).unsubscribe();
+            return result;
         },
         executeQuery(query, opts) {
+            const operation = client.createRequestOperation(
+                'query',
+                query,
+                opts
+            );
+            return client.executeRequestOperation(operation);
         }, 
         mutation(query, variables, context) {
+            return stream(client.executeMutation(createRequest(query, variables), context));
         },
         executeMutation(query, opts) {
+            const operation = client.createRequestOperation(
+                'mutation',
+                query,
+                opts
+            );
+            return client.executeRequestOperation(operation);
         },
         subscription(query, variables, context) {
+            return client.executeSubscription(createRequest(query, variables),context);
         },
         executeSubscription(query, opts) {
+            const operation = client.createRequestOperation(
+                'subscription',
+                query,
+                opts
+            );
+            return client.executeRequestOperation(operation);
         },
 
     } as Client);
@@ -377,7 +416,10 @@ export const Client: new (opts: Options) => Client = function Client(
           forward: fallbackExchange({ dispatchDebug }),
         })(operations$)
       );
-    
+
+    pipe(results$, publish); // 最後に実行する
+
+    return client;
 } as any;
 
 export const createClient = (Client as any) as (opts: Options) => Client;
