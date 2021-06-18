@@ -18,13 +18,17 @@ const collectTypes = (
     obj: EntityLike | EntityLike[], 
     types: { [typename: string]: unknown }
 ) => {
-    if (Array.isArray(obj)) for (let i = 0; i < obj.length; i++) collectTypes(obj[i], types);
-    else {
+    if (Array.isArray(obj)) {
+        for (let i = 0; i < obj.length; i++) collectTypes(obj[i], types);
+    } else if (typeof obj === 'object' && obj !== null) {
         for (const key in obj) {
-            if (key === '__typename' && typeof obj[key] === 'string') types[obj[key] as string] = 0;
-            else collectTypes(obj[key], types);
-        };
-    };
+          if (key === '__typename' && typeof obj[key] === 'string') {
+            types[obj[key] as string] = 0;
+          } else {
+            collectTypes(obj[key], types);
+          }
+        }
+    }
 
     return types;
 };
