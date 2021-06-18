@@ -32,6 +32,27 @@ export const fetchExchange: Exchange = ({ forward, dispatchDebug }) => {
                 const url = makeFetchURL(operation, body);
                 const fetchOptions = makeFetchOptions(operation, body);
 
+
+                // body 
+                // {query: "query postQuery($id: Int) {\n  getPost(id: $id) {\n …e\n    contents\n    pub_date\n    __typename\n  }\n}\n", operationName: "postQuery", variables: {…}, extensions: undefined}
+                // extensions: undefined
+                // operationName: "postQuery"
+                // query: "query postQuery($id: Int) {\n  getPost(id: $id) {\n    id\n    title\n    contents\n    pub_date\n    __typename\n  }\n}\n"
+                // variables: {id: 50}
+                // __proto__: Object
+
+                // url
+                // localhost:8080/graphql
+                // endpoint
+
+                // fetchOptions
+                // {body: "{\"query\":\"query postQuery($id: Int) {\\n  getPost(i…operationName\":\"postQuery\",\"variables\":{\"id\":50}}", method: "POST", headers: {…}}
+                // body: "{\"query\":\"query postQuery($id: Int) {\\n  getPost(id: $id) {\\n    id\\n    title\\n    contents\\n    pub_date\\n    __typename\\n  }\\n}\\n\",\"operationName\":\"postQuery\",\"variables\":{\"id\":50}}"
+                // headers: {content-type: "application/json"}
+                // method: "POST"
+                // signal: AbortSignal {aborted: true, onabort: null}
+                // __proto__: Object
+
                 dispatchDebug({
                     type: 'fetchRequest', 
                     message: 'A fetch request is being executed.', 
@@ -64,7 +85,7 @@ export const fetchExchange: Exchange = ({ forward, dispatchDebug }) => {
                 );
             })
         );
-        
+
         const forward$ = pipe(
             sharedOps$,
             filter(operation => {
@@ -72,7 +93,7 @@ export const fetchExchange: Exchange = ({ forward, dispatchDebug }) => {
             }),
             forward
         );
-      
+
         return merge([fetchResults$, forward$]);
     };
 };
