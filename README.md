@@ -12,6 +12,8 @@ I referred to this for studying. Great, thank you.
 Create the client as follows. Use createClient.  
 
 ```ts
+import { createClient } from 'gqlinton/dist';
+
 const client = createClient({
     url: 'http:/localhost:8080//graphql',
 });
