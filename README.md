@@ -52,6 +52,13 @@ client
 .then(res => console.log(res));
 ```
 
+
+## Library used
+
+- [@graphql-typed-document-node/core](https://github.com/dotansimha/graphql-typed-document-node)
+- [wonka](https://github.com/kitten/wonka)
+- [esbuild](https://github.com/evanw/esbuild)
+
 ## Supplement
 
 - I won't publish it to npm
