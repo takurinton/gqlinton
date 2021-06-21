@@ -7,7 +7,32 @@ urql is a great library with a great cache ecosystem, with a minimal and simple 
 I referred to this for studying. Great, thank you.   
 
 
-## Usage 
+## Setup
+
+First, fork and build gqlinton.  
+
+```bash
+git clone https://github.com/takurinton/gqlinton
+cd gqlinton
+npm i
+npm run build
+```
+
+Next, go to the playground and build the example app.
+
+```bash
+cd playground/example
+npm i 
+npm run build
+```
+
+Open index.html
+
+```bash
+open index.html
+```
+
+## Usage
 
 Create the client as follows. Use createClient.  
 
